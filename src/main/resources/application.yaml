@@ -1,0 +1,13 @@
+spring:
+  application:
+    name:
+      demo
+  datasource:
+    url: jdbc:mysql://localhost:3306/db?createDatabaseIfNotExist=true
+    username: user
+    password: password
+  sql:
+    init:
+      mode: always
+doma:
+  dialect: mysql
