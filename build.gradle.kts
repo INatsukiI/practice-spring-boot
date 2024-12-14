@@ -32,6 +32,7 @@ dependencies {
 	implementation("org.seasar.doma:doma-kotlin:3.1.0")
 	kapt("org.seasar.doma:doma-processor:3.1.0")
 	implementation("org.seasar.doma.boot:doma-spring-boot-starter:2.1.0")
+	testImplementation("io.mockk:mockk:1.13.13")
 }
 
 kotlin {
