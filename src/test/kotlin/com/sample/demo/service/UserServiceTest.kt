@@ -9,6 +9,7 @@ import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.catchThrowable
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -53,15 +54,6 @@ internal class UserServiceTest {
         unmockkAll()
     }
 
-    @Test
-    @DisplayName("ユーザー取得")
-    fun `ユーザー取得`() {
-        val expected = userEntity(id = 1)
-        val actual = sut.getUser(1)
-
-        assertThat(actual).isEqualTo(expected)
-    }
-
     @Nested
     @DisplayName("ユーザー作成")
     inner class CreateUser {
@@ -82,20 +74,27 @@ internal class UserServiceTest {
         fun `作成失敗(名前重複)`() {
             every { userDao.existsByName(any()) } returns true
 
-            val actual = assertThrows<Exception> {
+            val actual = catchThrowable {
                 sut.createUser(
                     name = "test",
                     age = 20
                 )
             }
 
-            assertThat(actual.message).isEqualTo("User with this phone number already exists")
+            assertThat(actual).isInstanceOf(Exception::class.java)
+            assertThat(actual.message).isEqualTo("ユーザー名が重複しています")
             verify(exactly = 0) { userDao.save(any()) }
         }
     }
 
+    @Test
+    @DisplayName("ユーザー取得")
+    fun `ユーザー取得`() {
+        val expected = userEntity(id = 1)
+        val actual = sut.getUser(1)
 
-
+        assertThat(actual).isEqualTo(expected)
+    }
 
     private fun userEntity(
         id: Long = 1

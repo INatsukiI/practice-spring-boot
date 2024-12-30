@@ -21,7 +21,7 @@ class UserService(
 
     fun createUser(name: String, age: Int) {
         if (userDao.existsByName(ExistsByNameParam(name))) {
-            throw Exception("User with this phone number already exists")
+            throw Exception("ユーザー名が重複しています")
         }
 
         userDao.save(
