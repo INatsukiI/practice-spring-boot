@@ -7,14 +7,17 @@ import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.impl.annotations.MockK
 import io.mockk.unmockkAll
+import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.assertThrows
 import org.springframework.boot.test.context.SpringBootTest
 import java.time.LocalDateTime
 
@@ -37,6 +40,7 @@ internal class UserServiceTest {
     @BeforeEach
     fun beforeEach() {
         every { userDao.findById(any()) } returns userEntity()
+        every { userDao.save(any()) } returns 1
     }
 
     @AfterEach
@@ -50,13 +54,47 @@ internal class UserServiceTest {
     }
 
     @Test
-    @DisplayName("ユーザー作成処理")
-    fun `ユーザー作成処理`() {
+    @DisplayName("ユーザー取得")
+    fun `ユーザー取得`() {
         val expected = userEntity(id = 1)
         val actual = sut.getUser(1)
 
         assertThat(actual).isEqualTo(expected)
     }
+
+    @Nested
+    @DisplayName("ユーザー作成")
+    inner class CreateUser {
+        @Test
+        @DisplayName("作成成功")
+        fun `作成成功`() {
+            every { userDao.existsByName(any()) } returns false
+            sut.createUser(
+                name = "test",
+                age = 20
+            )
+
+            verify { userDao.save(any()) }
+        }
+
+        @Test
+        @DisplayName("作成失敗(名前重複)")
+        fun `作成失敗(名前重複)`() {
+            every { userDao.existsByName(any()) } returns true
+
+            val actual = assertThrows<Exception> {
+                sut.createUser(
+                    name = "test",
+                    age = 20
+                )
+            }
+
+            assertThat(actual.message).isEqualTo("User with this phone number already exists")
+            verify(exactly = 0) { userDao.save(any()) }
+        }
+    }
+
+
 
 
     private fun userEntity(
