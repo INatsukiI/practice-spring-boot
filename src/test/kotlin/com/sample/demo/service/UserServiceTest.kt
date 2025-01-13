@@ -2,76 +2,52 @@ package com.sample.demo.service
 
 import com.sample.demo.dao.UserDao
 import com.sample.demo.entity.UserEntity
-import io.mockk.MockKAnnotations
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.equals.shouldBeEqual
+import io.kotest.matchers.throwable.shouldHaveMessage
+import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.clearAllMocks
 import io.mockk.every
-import io.mockk.impl.annotations.MockK
+import io.mockk.mockk
 import io.mockk.unmockkAll
 import io.mockk.verify
-import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.catchThrowable
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.assertThrows
-import org.springframework.boot.test.context.SpringBootTest
 import java.time.LocalDateTime
 
-@SpringBootTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-internal class UserServiceTest {
-    private lateinit var sut: UserService
+internal class UserServiceTest : FunSpec({
+    lateinit var sut: UserService
+    lateinit var userDao: UserDao
 
-    @MockK
-    private lateinit var userDao: UserDao
-
-    @BeforeAll
-    fun setup() {
-        MockKAnnotations.init(this)
-        sut = UserService(
-            userDao = userDao
-        )
+    beforeContainer {
+        userDao = mockk()
+        sut = UserService(userDao)
     }
 
-    @BeforeEach
-    fun beforeEach() {
-        every { userDao.findById(any()) } returns userEntity()
+    beforeEach {
         every { userDao.save(any()) } returns 1
+        every { userDao.findById(any()) } returns userEntity()
     }
 
-    @AfterEach
-    fun afterEach() {
-       clearAllMocks()
+    afterEach {
+        clearAllMocks()
     }
 
-    @AfterAll
-    fun tearDown() {
+    afterContainer {
         unmockkAll()
     }
 
-    @Nested
-    @DisplayName("ユーザー作成")
-    inner class CreateUser {
-        @Test
-        @DisplayName("作成成功")
-        fun `作成成功`() {
+    context("ユーザー作成") {
+        test("作成成功") {
             every { userDao.existsByName(any()) } returns false
             sut.createUser(
                 name = "test",
                 age = 20
             )
 
-            verify { userDao.save(any()) }
+            verify(exactly = 1) { userDao.save(any()) }
         }
 
-        @Test
-        @DisplayName("作成失敗(名前重複)")
-        fun `作成失敗(名前重複)`() {
+        test("作成失敗(名前重複)") {
             every { userDao.existsByName(any()) } returns true
 
             val actual = catchThrowable {
@@ -81,28 +57,28 @@ internal class UserServiceTest {
                 )
             }
 
-            assertThat(actual).isInstanceOf(Exception::class.java)
-            assertThat(actual.message).isEqualTo("ユーザー名が重複しています")
+            actual.shouldBeInstanceOf<Exception>()
+            actual.shouldHaveMessage("ユーザー名が重複しています")
             verify(exactly = 0) { userDao.save(any()) }
         }
     }
 
-    @Test
-    @DisplayName("ユーザー取得")
-    fun `ユーザー取得`() {
+    test("ユーザー取得") {
         val expected = userEntity(id = 1)
         val actual = sut.getUser(1)
-
-        assertThat(actual).isEqualTo(expected)
+        actual.shouldBeEqual(expected)
     }
 
-    private fun userEntity(
-        id: Long = 1
-    ) = UserEntity(
-        id = id,
-        name = "test",
-        age = 20,
-        createdAt = LocalDateTime.of(2022, 1, 1, 0, 0, 0),
-        updatedAt = LocalDateTime.of(2022, 1, 1, 0, 0, 0)
-    )
+}) {
+    companion object {
+        private fun userEntity(
+            id: Long = 1
+        ) = UserEntity(
+            id = id,
+            name = "test",
+            age = 20,
+            createdAt = LocalDateTime.of(2022, 1, 1, 0, 0, 0),
+            updatedAt = LocalDateTime.of(2022, 1, 1, 0, 0, 0)
+        )
+    }
 }
