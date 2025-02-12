@@ -27,13 +27,14 @@ dependencies {
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 	implementation("org.seasar.doma:doma-kotlin:3.1.0")
 	kapt("org.seasar.doma:doma-processor:3.1.0")
 	implementation("org.seasar.doma.boot:doma-spring-boot-starter:2.1.0")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	testImplementation("io.mockk:mockk:1.13.13")
+	testImplementation("io.kotest:kotest-runner-junit5:5.9.1")
+	testImplementation("io.kotest:kotest-assertions-core-jvm:5.9.1")
+
 }
 
 kotlin {
@@ -42,6 +43,6 @@ kotlin {
 	}
 }
 
-tasks.withType<Test> {
+tasks.withType<Test>().configureEach {
 	useJUnitPlatform()
 }
